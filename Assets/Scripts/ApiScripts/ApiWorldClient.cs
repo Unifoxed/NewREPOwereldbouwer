@@ -19,6 +19,7 @@ public class ApiWorldClient : MonoBehaviour
     public GameObject worldPrefab; // Reference to the prefab
     public RectTransform worldContainer; // Reference to the container\
     public Button createButton; // Reference to the create button\
+    public TMP_Text errorText;
 
     public static ApiWorldClient instance { get; private set; }
     void Start()
@@ -68,6 +69,8 @@ public class ApiWorldClient : MonoBehaviour
     }
     public async void CreateWorld(WorldPrefabController worldPrefabController)
     {
+        if (WorldNameRequirements(worldPrefabController))
+        { 
         var WorldCreateRequestDto = new PostWorldCreateRequestDto()
         {
             maxHeight = 200,
@@ -80,6 +83,7 @@ public class ApiWorldClient : MonoBehaviour
         var response = await PerformApiCall("https://avansict2207628.azurewebsites.net/wereldbouwer", "POST", json, varStorage.accessToken);
         Debug.Log(response);
         LoadWorld();
+    }
     }
 
     public async void LoadWorld()
@@ -128,6 +132,33 @@ public class ApiWorldClient : MonoBehaviour
         var response = await PerformApiCall($"https://avansict2207628.azurewebsites.net/wereldbouwer/{worldId}", "DELETE", null, varStorage.accessToken);
         Debug.Log(response);
         LoadWorld();
+    }
+
+    public bool WorldNameRequirements(WorldPrefabController worldPrefabController)
+    {
+        errorText.text = "";
+        string worldName = worldPrefabController.NameInput.text;
+        if (string.IsNullOrEmpty(worldName))
+        {
+            Debug.Log("De wereldnaam mag niet leeg zijn.");
+            errorText.text += "De wereldnaam mag niet leeg zijn.\n";
+        }
+        if (worldName.Length < 1 || worldName.Length > 25)
+        {
+            Debug.Log("De wereldnaam moet tussen de 1 en 25 tekens zijn.");
+            errorText.text += "De wereldnaam moet tussen de 1 en 25 tekens zijn.\n";
+        }
+        if (!System.Text.RegularExpressions.Regex.IsMatch(worldName, @"^[a-zA-Z0-9_]+$"))
+        {
+            Debug.Log("De wereldnaam mag alleen letters, cijfers en underscores bevatten.");
+            errorText.text += "De wereldnaam mag alleen letters, cijfers en underscores bevatten.\n";
+        }
+
+        if (errorText.text != "")
+        {
+            return false;
+        }
+        return true;
     }
 
     public async void LoadSpecificWorld(string worldId)
